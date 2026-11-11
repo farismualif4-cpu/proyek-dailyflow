@@ -9,7 +9,9 @@ import DashboardPage from './pages/Dashboard/DashboardPage';
 import TasksPage from './pages/Tasks/TasksPage';
 import NotesPage from './pages/Notes/NotesPage';
 import HabitsPage from './pages/Habits/HabitsPage';
+import CalendarPage from './pages/Calendar/CalendarPage';
 import RemindersPage from './pages/Reminders/RemindersPage';
+import SettingsPage from './pages/Settings/SettingsPage';
 
 import './App.css';
 
@@ -93,7 +95,9 @@ function App() {
             <Route path="tasks" element={<TasksPage />} />
             <Route path="notes" element={<NotesPage />} />
             <Route path="habits" element={<HabitsPage />} />
+            <Route path="calendar" element={<CalendarPage />} />
             <Route path="reminders" element={<RemindersPage />} />
+            <Route path="settings" element={<SettingsPage />} />
           </Route>
 
           {/* Fallback Rute Tak Dikenal */}

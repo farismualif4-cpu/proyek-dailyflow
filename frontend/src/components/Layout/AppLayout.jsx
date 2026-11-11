@@ -5,7 +5,9 @@ import {
   CheckSquare,
   FileText,
   Flame,
+  Calendar,
   Bell,
+  Settings,
   LogOut,
   Menu,
   X,
@@ -24,7 +26,9 @@ const AppLayout = () => {
     { name: 'Tasks', path: '/tasks', icon: CheckSquare },
     { name: 'Notes', path: '/notes', icon: FileText },
     { name: 'Habits', path: '/habits', icon: Flame },
+    { name: 'Kalender', path: '/calendar', icon: Calendar },
     { name: 'Reminders', path: '/reminders', icon: Bell },
+    { name: 'Pengaturan', path: '/settings', icon: Settings },
   ];
 
   const getPageTitle = () => {

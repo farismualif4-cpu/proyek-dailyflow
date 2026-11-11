@@ -6,6 +6,9 @@ const router = express.Router();
 const {
     register,
     login,
+    updateProfile,
+    changePassword,
+    getAccountStats,
 } = require("../controllers/auth.controller");
 
 const authMiddleware = require("../middleware/auth.middleware");
@@ -52,5 +55,14 @@ router.get("/me", authMiddleware, async (req, res) => {
         });
     }
 });
+
+// PUT /api/auth/profile
+router.put("/profile", authMiddleware, updateProfile);
+
+// PUT /api/auth/password
+router.put("/password", authMiddleware, changePassword);
+
+// GET /api/auth/stats
+router.get("/stats", authMiddleware, getAccountStats);
 
 module.exports = router;

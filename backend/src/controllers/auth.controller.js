@@ -5,6 +5,8 @@ const jwt = require("jsonwebtoken");
 const {
     registerSchema,
     loginSchema,
+    updateProfileSchema,
+    changePasswordSchema,
 } = require("../validators/auth.validator");
 
 // Membuat JWT Token
@@ -141,7 +143,152 @@ const login = async (req, res) => {
     }
 };
 
+// UPDATE PROFILE
+const updateProfile = async (req, res) => {
+    try {
+        const validation = updateProfileSchema.safeParse(req.body);
+
+        if (!validation.success) {
+            return res.status(400).json({
+                success: false,
+                message: "Validasi gagal",
+                errors: validation.error.flatten().fieldErrors,
+            });
+        }
+
+        const { name } = validation.data;
+
+        const updatedUser = await prisma.user.update({
+            where: { id: req.user.id },
+            data: { name },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                createdAt: true,
+            },
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Profil berhasil diperbarui",
+            user: updatedUser,
+        });
+    } catch (error) {
+        console.error("Update Profile Error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Terjadi kesalahan pada server",
+        });
+    }
+};
+
+// CHANGE PASSWORD
+const changePassword = async (req, res) => {
+    try {
+        const validation = changePasswordSchema.safeParse(req.body);
+
+        if (!validation.success) {
+            return res.status(400).json({
+                success: false,
+                message: "Validasi gagal",
+                errors: validation.error.flatten().fieldErrors,
+            });
+        }
+
+        const { oldPassword, newPassword } = validation.data;
+
+        const user = await prisma.user.findUnique({
+            where: { id: req.user.id },
+        });
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "Pengguna tidak ditemukan",
+            });
+        }
+
+        const isMatch = await bcrypt.compare(oldPassword, user.password);
+
+        if (!isMatch) {
+            return res.status(400).json({
+                success: false,
+                message: "Password lama tidak sesuai",
+            });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+        await prisma.user.update({
+            where: { id: req.user.id },
+            data: { password: hashedPassword },
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Password berhasil diperbarui",
+        });
+    } catch (error) {
+        console.error("Change Password Error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Terjadi kesalahan pada server",
+        });
+    }
+};
+
+// GET ACCOUNT STATS
+const getAccountStats = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const [totalTasks, completedTasks, totalHabits, totalNotes, totalReminders, user] = await Promise.all([
+            prisma.task.count({ where: { userId } }),
+            prisma.task.count({ where: { userId, status: "COMPLETED" } }),
+            prisma.habit.count({ where: { userId } }),
+            prisma.note.count({ where: { userId } }),
+            prisma.reminder.count({ where: { userId } }),
+            prisma.user.findUnique({
+                where: { id: userId },
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    createdAt: true,
+                },
+            }),
+        ]);
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                user,
+                stats: {
+                    totalTasks,
+                    completedTasks,
+                    totalHabits,
+                    totalNotes,
+                    totalReminders,
+                },
+            },
+        });
+    } catch (error) {
+        console.error("Get Account Stats Error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Terjadi kesalahan pada server",
+        });
+    }
+};
+
 module.exports = {
     register,
     login,
+    updateProfile,
+    changePassword,
+    getAccountStats,
 };

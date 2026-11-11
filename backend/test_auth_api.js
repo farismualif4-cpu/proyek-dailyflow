@@ -112,6 +112,22 @@ async function runAuthTests() {
         const noTokenRes = await makeRequest("GET", "/auth/me");
         assert(noTokenRes.status === 401, "8. GET /api/auth/me tanpa token ditolak (401 Unauthorized)");
 
+        // 9. PUT /api/auth/profile update nama -> 200
+        const updateProfRes = await makeRequest("PUT", "/auth/profile", { name: "Farisme Updated" }, authToken);
+        assert(updateProfRes.status === 200 && updateProfRes.body.user.name === "Farisme Updated", "9. PUT /api/auth/profile berhasil memperbarui nama (200 OK)");
+
+        // 10. PUT /api/auth/password dengan password salah -> 400
+        const wrongOldPassRes = await makeRequest("PUT", "/auth/password", { oldPassword: "wrongoldpassword", newPassword: "newpassword123" }, authToken);
+        assert(wrongOldPassRes.status === 400, "10. PUT /api/auth/password password lama salah ditolak (400 Bad Request)");
+
+        // 11. PUT /api/auth/password dengan password valid -> 200
+        const changePassRes = await makeRequest("PUT", "/auth/password", { oldPassword: password, newPassword: "newpassword123" }, authToken);
+        assert(changePassRes.status === 200 && changePassRes.body.success, "11. PUT /api/auth/password berhasil mengubah password (200 OK)");
+
+        // 12. GET /api/auth/stats -> 200
+        const statsRes = await makeRequest("GET", "/auth/stats", null, authToken);
+        assert(statsRes.status === 200 && statsRes.body.data.stats, "12. GET /api/auth/stats mengembalikan statistik akun (200 OK)");
+
         // Cleanup
         await prisma.user.deleteMany({ where: { email: testEmail } });
 
