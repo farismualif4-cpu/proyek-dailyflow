@@ -9,6 +9,7 @@ const noteRoutes = require("./routes/note.routes");
 const habitRoutes = require("./routes/habit.routes");
 const reminderRoutes = require("./routes/reminder.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
+const aiRoutes = require("./routes/ai.routes");
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.use("/api/notes", noteRoutes);
 app.use("/api/habits", habitRoutes);
 app.use("/api/reminders", reminderRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/ai", aiRoutes);
 
 // 404 Handler untuk rute yang tidak ditemukan
 app.use((req, res) => {
@@ -52,6 +54,10 @@ app.use((err, req, res, next) => {
 // Server
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-    console.log(`DailyFlow API berjalan di http://localhost:${PORT}`);
-});
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`DailyFlow API berjalan di http://localhost:${PORT}`);
+    });
+}
+
+module.exports = app;
