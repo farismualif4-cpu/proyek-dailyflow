@@ -12,6 +12,7 @@ import HabitsPage from './pages/Habits/HabitsPage';
 import CalendarPage from './pages/Calendar/CalendarPage';
 import RemindersPage from './pages/Reminders/RemindersPage';
 import SettingsPage from './pages/Settings/SettingsPage';
+import AiChatPage from './pages/Ai/AiChatPage';
 
 import './App.css';
 
@@ -92,6 +93,7 @@ function App() {
             }
           >
             <Route index element={<DashboardPage />} />
+            <Route path="ai" element={<AiChatPage />} />
             <Route path="tasks" element={<TasksPage />} />
             <Route path="notes" element={<NotesPage />} />
             <Route path="habits" element={<HabitsPage />} />

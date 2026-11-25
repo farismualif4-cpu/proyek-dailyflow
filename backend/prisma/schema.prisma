@@ -20,19 +20,34 @@ enum TaskPriority {
   HIGH
 }
 
+enum ActionProposalType {
+  CREATE_TASK
+  UPDATE_TASK
+  BATCH_CREATE_TASKS
+  DELETE_TASK
+}
+
+enum ActionProposalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
 model User {
-  id              String           @id @default(cuid())
-  name            String
-  email           String           @unique
-  password        String
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  tasks           Task[]
-  notes           Note[]
-  habits          Habit[]
-  reminders       Reminder[]
-  aiConversations AiConversation[]
-  aiUsageLogs     AiUsageLog[]
+  id                String             @id @default(cuid())
+  name              String
+  email             String             @unique
+  password          String
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  tasks             Task[]
+  notes             Note[]
+  habits            Habit[]
+  reminders         Reminder[]
+  aiConversations   AiConversation[]
+  aiUsageLogs       AiUsageLog[]
+  aiActionProposals AiActionProposal[]
 }
 
 model Task {
@@ -107,12 +122,13 @@ model Reminder {
 
 model AiConversation {
   id        String      @id @default(cuid())
-  title     String      @default("Percakapan Baru")
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  title     String             @default("Percakapan Baru")
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
   userId    String
-  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages  AiMessage[]
+  proposals AiActionProposal[]
 
   @@index([userId])
   @@index([userId, updatedAt])
@@ -141,4 +157,24 @@ model AiUsageLog {
 
   @@unique([userId, date])
   @@index([userId])
+}
+
+model AiActionProposal {
+  id             String               @id @default(cuid())
+  type           ActionProposalType
+  status         ActionProposalStatus @default(PENDING)
+  title          String
+  description    String?
+  actionData     Json
+  reason         String?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  userId         String
+  user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversationId String?
+  conversation   AiConversation?      @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([userId, status])
+  @@index([conversationId])
 }

@@ -1,6 +1,6 @@
 const path = require("path");
 require("dotenv").config({ path: path.join(__dirname, ".env") });
-const { execSync } = require("child_process");
+const { spawn } = require("child_process");
 const app = require("./src/server");
 
 console.log("================================================================");
@@ -15,7 +15,25 @@ const tests = [
     { name: "5. Reminder API", script: "test_reminders_api.js" },
     { name: "6. Dashboard API", script: "test_dashboard_api.js" },
     { name: "7. AI Foundation API (Stage 1)", script: "test_ai_foundation.js" },
+    { name: "8. AI Smart Task Planner & Action Engine (Stage 3)", script: "test_ai_smart_planner.js" },
 ];
+
+function runTest(script) {
+    return new Promise((resolve) => {
+        const child = spawn(process.execPath, [script], {
+            cwd: __dirname,
+            env: process.env,
+            stdio: "inherit",
+        });
+        child.on("close", (code) => {
+            resolve(code === 0);
+        });
+        child.on("error", (err) => {
+            console.error("Gagal menjalankan script pengujian:", err);
+            resolve(false);
+        });
+    });
+}
 
 async function main() {
     let server;
@@ -44,17 +62,11 @@ async function main() {
 
     for (const t of tests) {
         console.log(`\n>>> MENJALANKAN TEST: ${t.name} (${t.script})`);
-        try {
-            const output = execSync(`node ${t.script}`, {
-                cwd: __dirname,
-                encoding: "utf-8",
-                env: process.env,
-            });
-            console.log(output);
+        const passed = await runTest(t.script);
+        if (passed) {
             console.log(`>>> HASIL: SUKSES (${t.name})`);
-        } catch (err) {
+        } else {
             console.error(`>>> HASIL: GAGAL (${t.name})`);
-            console.error(err.stdout || err.message);
             allPassed = false;
         }
     }

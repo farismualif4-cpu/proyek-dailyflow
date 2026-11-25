@@ -14,6 +14,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
+import FloatingAiWidget from '../Ai/FloatingAiWidget';
 
 const AppLayout = () => {
   const { user, logout } = useAuth();
@@ -23,6 +24,7 @@ const AppLayout = () => {
 
   const navItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
+    { name: 'AI Assistant', path: '/ai', icon: Sparkles },
     { name: 'Tasks', path: '/tasks', icon: CheckSquare },
     { name: 'Notes', path: '/notes', icon: FileText },
     { name: 'Habits', path: '/habits', icon: Flame },
@@ -136,6 +138,9 @@ const AppLayout = () => {
           <Outlet />
         </main>
       </div>
+
+      {/* Floating AI Assistant Widget */}
+      <FloatingAiWidget />
     </div>
   );
 };

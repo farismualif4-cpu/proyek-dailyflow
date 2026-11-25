@@ -94,5 +94,18 @@ export const dashboardAPI = {
   getData: () => api.get('/dashboard'),
 };
 
+export const aiAPI = {
+  chat: (data) => api.post('/ai/chat', data, { timeout: 35000 }),
+  getConversations: () => api.get('/ai/conversations'),
+  getConversationById: (id) => api.get(`/ai/conversations/${id}`),
+  deleteConversation: (id) => api.delete(`/ai/conversations/${id}`),
+  getQuota: () => api.get('/ai/quota'),
+  planSmartTasks: (data) => api.post('/ai/planner/suggest', data, { timeout: 35000 }),
+  getProposals: (params) => api.get('/ai/proposals', { params }),
+  getProposalById: (id) => api.get(`/ai/proposals/${id}`),
+  approveProposal: (id) => api.post(`/ai/proposals/${id}/approve`),
+  rejectProposal: (id) => api.post(`/ai/proposals/${id}/reject`),
+};
+
 export default api;
 

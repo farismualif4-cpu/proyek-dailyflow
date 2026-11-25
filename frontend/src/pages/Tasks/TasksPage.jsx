@@ -7,8 +7,10 @@ import {
   Edit2,
   Calendar,
   X,
+  Sparkles,
 } from 'lucide-react';
 import { tasksAPI } from '../../services/api';
+import SmartTaskPlannerModal from '../../components/Ai/SmartTaskPlannerModal';
 
 const TasksPage = () => {
   const [tasks, setTasks] = useState([]);
@@ -16,6 +18,10 @@ const TasksPage = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [priorityFilter, setPriorityFilter] = useState('ALL');
+
+  // AI Planner Modal State
+  const [plannerOpen, setPlannerOpen] = useState(false);
+  const [selectedTargetTask, setSelectedTargetTask] = useState(null);
 
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
@@ -157,9 +163,30 @@ const TasksPage = () => {
           />
         </div>
 
-        <button className="btn btn-primary" onClick={handleOpenCreateModal}>
-          <Plus size={18} /> Tambah Tugas
-        </button>
+        <div style={{ display: 'flex', gap: '0.6rem' }}>
+          <button
+            className="btn btn-secondary"
+            onClick={() => {
+              setSelectedTargetTask(null);
+              setPlannerOpen(true);
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              borderColor: 'var(--accent)',
+              color: 'var(--text-primary)',
+            }}
+            title="Buka AI Smart Task Planner"
+          >
+            <Sparkles size={16} color="var(--accent)" />
+            <span>AI Smart Planner</span>
+          </button>
+
+          <button className="btn btn-primary" onClick={handleOpenCreateModal}>
+            <Plus size={18} /> Tambah Tugas
+          </button>
+        </div>
       </div>
 
       {/* Filter Tabs */}
@@ -280,6 +307,17 @@ const TasksPage = () => {
               </div>
 
               <div className="task-actions">
+                <button
+                  className="btn-icon-sm"
+                  onClick={() => {
+                    setSelectedTargetTask(task);
+                    setPlannerOpen(true);
+                  }}
+                  title="Pecah tugas dengan AI"
+                  style={{ color: 'var(--accent)' }}
+                >
+                  <Sparkles size={16} />
+                </button>
                 <button
                   className="btn-icon-sm"
                   onClick={() => handleOpenEditModal(task)}
@@ -404,6 +442,16 @@ const TasksPage = () => {
           </div>
         </div>
       )}
+      {/* AI Smart Task Planner Modal */}
+      <SmartTaskPlannerModal
+        isOpen={plannerOpen}
+        onClose={() => {
+          setPlannerOpen(false);
+          setSelectedTargetTask(null);
+        }}
+        targetTask={selectedTargetTask}
+        onTasksChanged={() => fetchTasks()}
+      />
     </div>
   );
 };

@@ -1,8 +1,11 @@
 const prisma = require("../config/prisma");
 const { chatMessageSchema } = require("../validators/ai.validator");
+const { plannerSuggestSchema } = require("../validators/aiPlanner.validator");
 const { checkAndConsumeQuota, getQuotaStatus } = require("../services/aiQuota.service");
 const { getUserContext } = require("../services/aiContext.service");
 const openaiService = require("../services/openai.service");
+const aiPlannerService = require("../services/aiPlanner.service");
+const aiActionEngineService = require("../services/aiActionEngine.service");
 
 // ==========================================
 // CHAT WITH AI
@@ -277,10 +280,164 @@ const getAiQuota = async (req, res) => {
     }
 };
 
+// ==========================================
+// SMART TASK PLANNER
+// ==========================================
+const planSmartTasks = async (req, res) => {
+    try {
+        const validation = plannerSuggestSchema.safeParse(req.body);
+
+        if (!validation.success) {
+            return res.status(400).json({
+                success: false,
+                message: "Validasi sasaran perencanaan gagal",
+                errors: validation.error.flatten().fieldErrors,
+            });
+        }
+
+        const { goal, taskId, conversationId } = validation.data;
+        const userId = req.user.id;
+
+        // Konsumsi kuota secara aman terhadap concurrency
+        let quota;
+        try {
+            quota = await checkAndConsumeQuota(userId);
+        } catch (quotaError) {
+            if (quotaError.status === 429) {
+                return res.status(429).json({
+                    success: false,
+                    message: quotaError.message,
+                    code: quotaError.code || "AI_QUOTA_EXCEEDED",
+                    quota: quotaError.quota,
+                });
+            }
+            throw quotaError;
+        }
+
+        // Panggil service AI Planner
+        const planResult = await aiPlannerService.planTasks({
+            userId,
+            goal,
+            taskId,
+            conversationId,
+        });
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                ...planResult,
+                quota,
+            },
+        });
+    } catch (error) {
+        console.error("Plan smart tasks error:", error);
+        return res.status(error.status || 500).json({
+            success: false,
+            message: error.message || "Terjadi kesalahan pada server saat merencanakan tugas dengan AI",
+        });
+    }
+};
+
+// ==========================================
+// GET ACTION PROPOSALS
+// ==========================================
+const getProposals = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const proposals = await aiActionEngineService.getProposals(userId, req.query);
+
+        return res.status(200).json({
+            success: true,
+            data: proposals,
+        });
+    } catch (error) {
+        console.error("Get proposals error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Terjadi kesalahan saat mengambil daftar usulan tindakan",
+        });
+    }
+};
+
+// ==========================================
+// GET PROPOSAL BY ID
+// ==========================================
+const getProposalById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.id;
+        const proposal = await aiActionEngineService.getProposalById(id, userId);
+
+        return res.status(200).json({
+            success: true,
+            data: proposal,
+        });
+    } catch (error) {
+        console.error("Get proposal by ID error:", error);
+        return res.status(error.status || 500).json({
+            success: false,
+            message: error.message || "Terjadi kesalahan saat mengambil detail usulan tindakan",
+        });
+    }
+};
+
+// ==========================================
+// APPROVE PROPOSAL
+// ==========================================
+const approveProposal = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.id;
+
+        const result = await aiActionEngineService.approveAndExecute(id, userId);
+
+        return res.status(200).json({
+            success: true,
+            message: "Usulan tindakan berhasil disetujui dan diterapkan",
+            data: result,
+        });
+    } catch (error) {
+        console.error("Approve proposal error:", error);
+        return res.status(error.status || 500).json({
+            success: false,
+            message: error.message || "Terjadi kesalahan saat menyetujui usulan tindakan",
+        });
+    }
+};
+
+// ==========================================
+// REJECT PROPOSAL
+// ==========================================
+const rejectProposal = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.id;
+
+        const updated = await aiActionEngineService.rejectProposal(id, userId);
+
+        return res.status(200).json({
+            success: true,
+            message: "Usulan tindakan berhasil ditolak",
+            data: updated,
+        });
+    } catch (error) {
+        console.error("Reject proposal error:", error);
+        return res.status(error.status || 500).json({
+            success: false,
+            message: error.message || "Terjadi kesalahan saat menolak usulan tindakan",
+        });
+    }
+};
+
 module.exports = {
     chatWithAi,
     getConversations,
     getConversationById,
     deleteConversation,
     getAiQuota,
+    planSmartTasks,
+    getProposals,
+    getProposalById,
+    approveProposal,
+    rejectProposal,
 };
